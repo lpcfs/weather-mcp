@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: weather-mcp
+
+services:
+  # Internal-only; only the MCP server talks to it.
+  api:
+    project: ./src/Weather.Api
+    language: dotnet
+    host: containerapp
+
+  # Public MCP endpoint at https://<mcp-fqdn>/mcp
+  mcp:
+    project: ./src/Weather.McpServer
+    language: dotnet
+    host: containerapp

@@ -74,6 +74,22 @@ dotnet run --project src/Weather.McpClient
 
 Build only: `dotnet build Weather.slnx`. Stop running instances first, otherwise the build fails on locked DLLs.
 
+## Deploy to Azure (azd)
+
+Deploys `Weather.Api` (internal ingress) and `Weather.McpServer` (public ingress) to Azure Container Apps, with a container registry, Log Analytics and a managed identity for image pulls. Requires the [Azure Developer CLI](https://aka.ms/azd) and Docker is **not** needed (images are built with `dotnet publish`).
+
+```bash
+azd auth login
+azd up                      # provision infra + build + deploy; asks for env name, subscription, region
+azd env get-values          # shows MCP_URL (https://<fqdn>/mcp) and API_URL
+azd deploy                  # redeploy code only
+azd down                    # delete everything
+```
+
+The MCP server reaches the API through `WEATHER_API_URL`, set by the Bicep template. Point an MCP client at `MCP_URL`; the endpoint is unauthenticated, so add auth before sharing it widely.
+
+Files: `azure.yaml` (services), `infra/main.bicep` (resource group), `infra/resources.bicep` (resources).
+
 MCP client config (e.g. Claude Desktop / Claude Code):
 
 ```json
