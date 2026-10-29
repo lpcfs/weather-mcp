@@ -5,7 +5,8 @@
 | `Weather.Models` | Shared contract types (`CurrentWeather`, `WeatherForecast`, `Location`, ...) |
 | `Weather.Api` | ASP.NET minimal API; fetches data from Open-Meteo (no API key) |
 | `Weather.Sdk` | `IWeatherClient` + typed HTTP implementation + `AddWeatherClient()` DI extension |
-| `Weather.McpServer` | MCP server (stdio, official `ModelContextProtocol` C# SDK); tools call the API **only through `IWeatherClient`** |
+| `Weather.McpServer` | MCP server (streamable HTTP at `/mcp`, official `ModelContextProtocol` C# SDK); tools call the API **only through `IWeatherClient`** |
+| `Weather.McpClient` | Console chatbot: an LLM via OpenRouter + the weather MCP tools. Needs `OPENROUTER_API_KEY`; `WEATHER_MCP_URL` (default `http://localhost:5000/mcp`), `OPENROUTER_MODEL` optional |
 
 ## Run
 
