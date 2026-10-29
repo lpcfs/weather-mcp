@@ -1,5 +1,7 @@
 # Weather MCP monorepo
 
+A weather MCP server for fetching local weather data via the Model Context Protocol, with a small weather API behind it and a console chatbot that uses the MCP tools. Weather data comes from Open-Meteo (no API key needed). Only the chatbot needs a key: an [OpenRouter](https://openrouter.ai) API key in `OPENROUTER_API_KEY`.
+
 | Project | Purpose |
 |---|---|
 | `Weather.Models` | Shared contract types (`CurrentWeather`, `WeatherForecast`, `Location`, ...) |
