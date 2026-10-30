@@ -9,6 +9,12 @@ param environmentName string
 @description('Azure region for all resources.')
 param location string
 
+@description('Client ID of the Entra app registration for the MCP API (created by scripts/setup-entra.ps1).')
+param entraApiClientId string
+
+@description('Object ID of the user who manages Key Vault secrets (set by azd as AZURE_PRINCIPAL_ID).')
+param adminPrincipalId string = ''
+
 var tags = { 'azd-env-name': environmentName }
 
 resource rg 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -24,6 +30,9 @@ module resources 'resources.bicep' = {
     environmentName: environmentName
     location: location
     tags: tags
+    entraTenantId: subscription().tenantId
+    entraApiClientId: entraApiClientId
+    adminPrincipalId: adminPrincipalId
   }
 }
 
@@ -31,4 +40,6 @@ module resources 'resources.bicep' = {
 output AZURE_LOCATION string = location
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = resources.outputs.registryEndpoint
 output API_URL string = resources.outputs.apiUrl
+output KEYVAULT_NAME string = resources.outputs.keyVaultName
+output KEYVAULT_URI string = resources.outputs.keyVaultUri
 output MCP_URL string = resources.outputs.mcpUrl

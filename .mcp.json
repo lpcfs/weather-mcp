@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "weather": {
+      "type": "http",
+      "url": "https://ca-mcp-352acnm7t25rs.wittyplant-b06b1f5f.westeurope.azurecontainerapps.io/mcp",
+      "headersHelper": "powershell -NoProfile -File scripts/mcp-headers.ps1"
+    }
+  }
+}

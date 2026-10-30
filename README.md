@@ -86,7 +86,48 @@ azd deploy                  # redeploy code only
 azd down                    # delete everything
 ```
 
-The MCP server reaches the API through `WEATHER_API_URL`, set by the Bicep template. Point an MCP client at `MCP_URL`; the endpoint is unauthenticated, so add auth before sharing it widely.
+The MCP server reaches the API through `WEATHER_API_URL`, set by the Bicep template. Point an MCP client at `MCP_URL` (see **Entra ID protection** below; the deployed endpoint requires a token).
+
+## Entra ID protection
+
+The MCP server validates Entra ID access tokens (JWT bearer) and serves OAuth protected-resource metadata (RFC 9728) at `/.well-known/oauth-protected-resource/mcp`. A token is accepted when its audience is the API app and it carries the delegated scope `Weather.Read` (signed-in users, `scp`) or the app role `Weather.ReadAll` (apps, `roles`).
+
+```powershell
+az login
+./scripts/setup-entra.ps1 [-CreateClientSecret]   # creates weather-mcp-api + weather-mcp-client, stores IDs in the azd env
+azd up                                            # deploys with AzureAd__TenantId / AzureAd__ClientId
+```
+
+The server fails to start without `AzureAd__TenantId` and `AzureAd__ClientId`. `Auth__Disabled=true` turns protection off for local development (`src/run-all.ps1` sets it).
+
+The chatbot defaults to the deployed server and its Entra IDs, so against Azure just run `dotnet run --project src/Weather.McpClient` (browser sign-in; the OpenRouter key is downloaded from the server). When `WEATHER_MCP_URL` points at localhost, Entra is off by default. Override with these variables (the `ENTRA_*` values are printed by the script):
+
+```powershell
+$env:WEATHER_MCP_URL = '<MCP_URL>'
+$env:ENTRA_TENANT_ID = '...'; $env:ENTRA_API_CLIENT_ID = '...'; $env:ENTRA_CLIENT_ID = '...'
+# optional: $env:ENTRA_CLIENT_SECRET = '...'   -> app-only; otherwise interactive browser sign-in
+dotnet run --project src/Weather.McpClient
+```
+
+## OpenRouter key in Key Vault
+
+`azd up` also creates a Key Vault (RBAC, soft delete + purge protection). Only the MCP server's dedicated managed identity (`id-mcp-*`, role *Key Vault Secrets User*) can read it; the chatbot never touches the vault. The deployer (`AZURE_PRINCIPAL_ID`) gets *Key Vault Secrets Officer* so you can store the secret - remove that role assignment afterwards if you want the server to be the only reader.
+
+Add the key yourself (it is never in source control):
+
+```powershell
+az keyvault secret set --vault-name (azd env get-value KEYVAULT_NAME) --name OPENROUTER-API-KEY --value '<your OpenRouter key>'
+```
+
+The MCP server serves it at `GET /secrets/openrouter-key` to callers with a valid Entra `Weather.Read` token. When `OPENROUTER_API_KEY` is not set but the `ENTRA_*` variables are, `Weather.McpClient` signs in and downloads the key from there, so against the deployed server you only need the `ENTRA_*` values and `WEATHER_MCP_URL`.
+Claude Code / Desktop: Entra ID has no dynamic client registration, so their built-in OAuth flow can't sign in. Pass a token instead, e.g. in `.mcp.json`:
+
+```json
+{ "mcpServers": { "weather": { "type": "http", "url": "<MCP_URL>",
+    "headers": { "Authorization": "Bearer ${WEATHER_MCP_TOKEN}" } } } }
+```
+
+with `$env:WEATHER_MCP_TOKEN = az account get-access-token --scope api://<ENTRA_API_CLIENT_ID>/Weather.Read --query accessToken -o tsv` (tokens last about an hour).
 
 Files: `azure.yaml` (services), `infra/main.bicep` (resource group), `infra/resources.bicep` (resources).
 

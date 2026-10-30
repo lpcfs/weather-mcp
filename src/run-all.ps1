@@ -41,7 +41,7 @@ try {
     }
 
     Write-Host "2/3 Weather.McpServer on :$McpPort"
-    $procs += Start-Project 'Weather.McpServer' @('--urls', "http://localhost:$McpPort") @{ WEATHER_API_URL = "http://localhost:$ApiPort" }
+    $procs += Start-Project 'Weather.McpServer' @('--urls', "http://localhost:$McpPort") @{ WEATHER_API_URL = "http://localhost:$ApiPort"; Auth__Disabled = 'true' }
     Wait-Until 'Weather.McpServer' {
         (New-Object Net.Sockets.TcpClient).ConnectAsync('localhost', $McpPort).Wait(1000)
     }
